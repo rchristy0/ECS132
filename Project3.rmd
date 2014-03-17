@@ -1,0 +1,515 @@
+Project 3: Auto and Parkinson's Disease
+========================================================
+
+=========
+AutoData
+=========
+
+
+```{r GettingData}
+
+autodata = data.frame(read.table("autodata.txt"))
+
+autonames = c("MPG", "Cylinders", "Displacement", "Horsepower", "Weight", "Acceleration", "ModelYear", "Origin", "CarName")
+
+names(autodata) = autonames
+names(autodata)
+
+y = autodata$MPG
+
+```
+
+```{r CylindersCorr}
+
+class(autodata$Cylinders) 
+MPGvCylinders.lm = lm(MPG ~ Cylinders, autodata)
+plot(autodata$Cylinders, autodata$MPG)
+
+```
+
+It appears that the cylinders have 5 possible values, and there does not appear to be a linear regression.
+
+```{r CylindersAgain}
+
+a = autodata$Cylinders
+a = factor(a)
+plot(y~a, main = "MPG v. Cylinders")
+
+```
+
+From here, you can see that there appears to be a negative regression in the miles per gallon as the number of cylinders increase, but it does not appear strong enough to count as a predictor model.
+
+```{r DisplacementCorr}
+
+class(autodata$Displacement)
+MPGvDisplacement.lm = lm(MPG ~ Displacement, autodata)
+plot(autodata$Displacement, autodata$MPG, main = "MPG v. Displacement")
+predictionD = predict(MPGvDisplacement.lm)
+lines(autodata$Displacement, predictionD)
+
+```
+
+It appears there is an exponential regression here.
+
+```{r DisplacementAgain}
+
+cor(y, autodata$Displacement)
+
+```
+
+With a correlation of -0.8, we can assume that displacement would be a good potential predictor variable.
+
+
+```{r HorsepowerCorr}
+
+class(autodata$Horsepower)
+MPGvHorsepower.lm = lm(MPG ~ Horsepower, autodata)
+plot(autodata$MPG, autodata$Horsepower, main = "MPG v. Horsepower")
+
+```
+
+It appears there are 2 sets regressions here, there is a separation between the data. This would probably not be a good predictor, though if we split it up into two different sets we can probably have some use of it.
+
+```{r HorsepowerAgain1}
+
+horsepower = as.numeric(autodata$Horsepower)
+# to account for the non-numeric inputs in the data
+plot(y~horsepower, main = "MPG v. Horsepower")
+
+horsepower1 = subset(horsepower, horsepower < 50)
+y1 = subset(autodata$MPG, as.numeric(autodata$Horsepower) < 50)
+plot(y1 ~ horsepower1, main = "MPG v. Horsepower1")
+predictionH1 = predict(lm(y1 ~ horsepower1))
+lines(horsepower1, predictionH1)
+cor(y1, horsepower1)
+
+```
+
+With a -0.67 correlation, we can rule out horsepower1 from the potential predictor variable pile.
+
+```{r HorsepowerAgain2}
+
+horsepower2 = subset(horsepower, horsepower >= 50)
+y2 = subset(autodata$MPG, as.numeric(autodata$Horsepower) >= 50)
+plot(y2 ~ horsepower2, main = "MPG v. Horsepower2")
+predictionH2 = predict(lm(y2 ~ horsepower2))
+lines(horsepower2, predictionH2)
+cor(y2, horsepower2)
+
+```
+
+With a -0.62 correlation, we can rule out the horsepower variable completely from the predictor variable pile.
+
+```{r WeightCorr}
+
+class(autodata$Weight)
+MPGvWeight = lm(Weight ~ MPG, autodata)
+plot(autodata$Weight, autodata$MPG, main = "MPG v. Weight") # this looks to be more linear
+predictionM = predict(MPGvWeight)
+lines(predictionM, autodata$MPG)
+cor(y, autodata$Weight) 
+
+```
+
+With a correlation of -0.83, we can assume that weight would be a good potential predictor variable.
+
+```{r AccelerationCorr}
+
+class(autodata$Acceleration)
+MPGvAcceleration = lm(Acceleration~MPG, autodata)
+plot(autodata$Acceleration, autodata$MPG, main = "MPG v. Acceleration") # another more linear plot
+predictionA = predict(MPGvAcceleration)
+lines(predictionA, y)
+cor(y, autodata$Acceleration)
+
+```
+
+With a 0.42 correlation, we can rule out acceleration, but what if the log of acceleration could give us a better predictor variable?
+
+```{r AccelerationLogCorr}
+
+ylog = log(y)
+plot(autodata$Acceleration, ylog, main = "MPG v. log(Acceleration)")
+predictionAlog = predict(lm(autodata$Acceleration ~ ylog))
+lines(predictionAlog, ylog)
+cor(autodata$Acceleration, ylog)
+
+```
+
+Obviously, with a 0.446 we can definitely rule out acceleration from our prediction model.
+
+```{r ModelYearCorr}
+
+class(autodata$ModelYear)
+MPGvModelYear = lm(y ~ ModelYear, autodata)
+plot(y, autodata$ModelYear, main = "MPG v. ModelYear")
+predictionMY = predict(MPGvModelYear)
+lines(predictionMY, autodata$ModelYear)
+
+```
+
+There does not appear to be any linear regression here.
+
+```{r ModelYearAgain}
+
+cor(y, autodata$ModelYear) 
+
+```
+
+With a 0.579 correlation, we can definitely rule the Model year out as a predictor variable.
+
+```{r OriginCorr}
+
+class(autodata$Origin)
+MPGvOrigin = lm(y ~ autodata$Origin)
+plot(y, autodata$Origin, main = "MPG v. Origin")
+
+```
+
+Origin appears to have 3 possible values, and there is no to little linear regression here.
+
+```{r OriginAgain}
+
+b = autodata$Origin
+b = factor(b)
+plot(y ~ b, main = "MPG v. Origin")
+
+```
+
+From here you can see an increase in the miles per gallon as the origin name increases.
+
+```{r CarNameCorr}
+
+class(autodata$CarName)
+plot(autodata$MPG, autodata$CarName, main = "MPG v. CarName") 
+
+```
+
+There is no linear regression here.
+
+So, from all the correlations we have looked at with the miles per gallon variable, we can see that the decent predictor variables are weight and displacement. We are not saying that weight and displacement are the causes for higher miles per gallon, we are only saying that there is a correlation, or trend, between these variables. Through finding the correlation coefficients, we are able to make approximate linear regression relationships between the MPG and the predictor variables without hypothesis testing. Through plots we can also note these relationships. Using these variables, we will now create a linear predictor model.
+
+
+```{r FinalLinearRegression}
+
+WeightandDisp = (autodata$Weight + autodata$Displacement)
+plot(WeightandDisp, y, main = "MPG v. Prediction")
+FinalLinearModel = lm(y ~ WeightandDisp)
+FinalPrediction = predict(FinalLinearModel)
+lines(WeightandDisp, FinalPrediction)
+cor(y, FinalPrediction)
+
+```
+
+This -0.834 correlation is pretty close to -1, so we can assume that this linear model is a decent linear model.
+
+```{r ErrorAnalysis}
+
+errors = FinalPrediction - y
+mean(errors)
+
+```
+
+The E[e] is very close to 0, so our assumptions of error can be assumed to be mostly correct and fairly negligible.
+
+```{r MSE}
+
+errorssquared = (FinalPrediction - y)^2
+sse = sum(errorssquared)
+sse
+mse = sum(errorssquared)/(length(errorssquared) - 1)
+mse
+
+```
+
+Our degrees of freedom here is n-1 because we can say that our one factor is Weight and Displacement combined, so we must account for this by subtracting it from n.
+
+===================
+Parkinson's Disease
+===================
+
+```{r GettingParkData}
+
+parkdata = read.csv("parkinsonsdata.txt")
+
+names(parkdata)
+
+yHealthy = subset(parkdata, parkdata$status == 0)
+yPark = subset(parkdata, parkdata$status == 1)
+
+y = parkdata$status
+
+names(parkdata)
+
+length(yHealthy$name)
+length(yPark$name)
+
+```
+
+This is obviously a very unbalanced experimental design.
+
+Categories:
+
+name - ASCII subject name and recording number
+
+MDVP:Fo(Hz) - Average vocal fundamental frequency
+
+MDVP:Fhi(Hz) - Maximum vocal fundamental frequency
+
+MDVP:Flo(Hz) - Minimum vocal fundamental frequency
+
+MDVP:Jitter(%),MDVP:Jitter(Abs),MDVP:RAP,MDVP:PPQ,Jitter:DDP - Several measures of variation in fundamental frequency
+
+MDVP:Shimmer,MDVP:Shimmer(dB),Shimmer:APQ3,Shimmer:APQ5,MDVP:APQ,Shimmer:DDA - Several measures of variation in amplitude
+
+NHR,HNR - Two measures of ratio of noise to tonal components in the voice
+
+status - Health status of the subject (one) - Parkinson's, (zero) - healthy
+
+RPDE,D2 - Two nonlinear dynamical complexity measures
+
+DFA - Signal fractal scaling exponent
+
+spread1,spread2,PPE - Three nonlinear measures of fundamental frequency variation 
+
+```{r MDVP.Fo.HzCorr}
+
+plot(y, parkdata$MDVP.Fo.Hz., main = "Status v. MDVP.Fo.Hz")
+logreg = glm(y ~ parkdata$MDVP.Fo.Hz.)
+plot(parkdata$MDVP.Fo.Hz. ~ factor(y), main = "Status v. MDVP.Fo.Hz")
+
+```
+
+It can be seen that there is a negative logistic regression between average vocal fundamental frequency and disease status.
+
+```{r MDVP.Fhi.Hz.Corr}
+
+plot(y, parkdata$MDVP.Fhi.Hz., main = "Status v. MDVP.Fhi.Hz")
+logreg = glm(y ~ parkdata$MDVP.Fhi.Hz.)
+plot(parkdata$MDVP.Fhi.Hz. ~ factor(y), main = "Status v. MDVP.Fhi.Hz")
+
+```
+
+It appears as though there is no obvious difference between the diseased and healthy observations in the maximum vocal fundamental frequency category.
+
+```{r MDVP.Flo.Hz.Corr}
+
+plot(y, parkdata$MDVP.Flo.Hz., main = "Status v. MDVP.Flo.Hz")
+logreg = glm(y ~ parkdata$MDVP.Flo.Hz.)
+plot(parkdata$MDVP.Flo.Hz. ~ factor(y), main = "Status v. MDVP.Flo.Hz")
+
+```
+
+Like the average vocal fundamental frequency, ther is a difference in the range of observations in the two factors, however, there does not appear to be much of a difference in the medians.
+
+```{r MDVP.Jitter...Corr}
+
+plot(y, parkdata$MDVP.Jitter..., main = "Status v. MDVP.Jitter...")
+logreg = glm(y ~ parkdata$MDVP.Jitter...)
+plot(parkdata$MDVP.Jitter... ~ factor(y), main = "Status v. MDVP.Jitter...")
+
+```
+
+The ranges in variations in fundamental frequency are definitely different, however, the observations do not appear to differ very much in median.
+
+```{r MDVP.Jitter.Abs.Corr}
+
+plot(y, parkdata$MDVP.Jitter.Abs., main = "Status v. MDVP.Jitter.Abs.")
+logreg = glm(y ~ parkdata$MDVP.Jitter.Abs.)
+plot(parkdata$MDVP.Jitter.Abs. ~ factor(y), main = "Status v. MDVP.Jitter.Abs.")
+
+```
+
+Like the previous category, the ranges are very different, but the medians still fall around the same values.
+
+```{r MDVP.RAPCorr}
+
+plot(y, parkdata$MDVP.RAP, main = "Status v. MDVP.RAP")
+logreg = glm(y ~ parkdata$MDVP.RAP)
+plot(parkdata$MDVP.RAP ~ factor(y), main = "Status v. MDVP.RAP")
+
+```
+
+The ranges again are very different, but the medians still are about the same.
+
+```{r MDVP.PPQCorr}
+
+plot(y, parkdata$MDVP.PPQ, main = "Status v. MDVP.PPQ")
+logreg = glm(y ~ parkdata$MDVP.PPQ)
+plot(parkdata$MDVP.PPQ ~ factor(y), main = "Status v. MDVP.PPQ")
+
+```
+
+The medians are a bit more different here, and the ranges are very different again.
+
+```{r MDVP.Jitter.DDPCorr}
+
+plot(y, parkdata$Jitter.DDP, main = "Status v. Jitter.DDP")
+logreg = glm(y ~ parkdata$Jitter.DDP)
+plot(parkdata$Jitter.DDP ~ factor(y), main = "Status v. Jitter.DDP")
+
+```
+
+The same observations can be said with this category.
+
+```{r MDVP.ShimmerCorr}
+
+plot(y, parkdata$MDVP.Shimmer, main = "Status v. MDVP.Shimmer")
+logreg = glm(y ~ parkdata$MDVP.Shimmer)
+plot(parkdata$MDVP.Shimmer ~ factor(y), main = "Status v. MDVP.Shimmer")
+
+```
+
+Same.
+
+```{r MDVP.Shimmer.dBCorr}
+
+plot(y, parkdata$MDVP.Shimmer.dB, main = "Status v. MDVP.Shimmer.dB")
+logreg = glm(y ~ parkdata$MDVP.Shimmer.dB)
+plot(parkdata$MDVP.Shimmer.dB ~ factor(y), main = "Status v. MDVP.Shimmer.dB")
+
+```
+
+The medians look to be different this time.
+
+```{r Shimmer.APQ3Corr}
+
+plot(y, parkdata$Shimmer.APQ3, main = "Status v. MDVP.Shimmer.APQ3")
+logreg = glm(y ~ parkdata$Shimmer.APQ3)
+plot(parkdata$Shimmer.APQ3 ~ factor(y), main = "Status v. MDVP.Shimmer.APQ3")
+
+```
+
+Again.
+
+```{r Shimmer.APQ5Corr}
+
+plot(y, parkdata$Shimmer.APQ5, main = "Status v. MDVP.Shimmer.APQ5")
+logreg = glm(y ~ parkdata$Shimmer.APQ5)
+plot(parkdata$Shimmer.APQ5 ~ factor(y), main = "Status v. MDVP.Shimmer.APQ5")
+
+```
+
+Again.
+
+```{r MDVP.APQCorr}
+
+plot(y, parkdata$MDVP.APQ, main = "Status v. MDVP.APQ")
+logreg = glm(y ~ parkdata$MDVP.APQ)
+plot(parkdata$MDVP.APQ ~ factor(y), main = "Status v. MDVP.APQ")
+
+```
+
+Again.
+
+```{r Shimmer.DDACorr}
+
+plot(y, parkdata$Shimmer.DDA, main = "Status v. Shimmer.DDA")
+logreg = glm(y ~ parkdata$Shimmer.DDA)
+plot(parkdata$Shimmer.DDA ~ factor(y), main = "Status v. Shimmer.DDA")
+
+```
+
+Again.
+
+```{r NHRCorr}
+
+plot(y, parkdata$NHR, main = "Status v. NHR")
+logreg = glm(y ~ parkdata$NHR)
+plot(parkdata$NHR ~ factor(y), main = "Status v. NHR")
+
+```
+
+The ranges are very different.
+
+```{r HNRCorr}
+
+plot(y, parkdata$HNR, main = "Status v. HNR")
+logreg = glm(y ~ parkdata$HNR)
+plot(parkdata$HNR ~ factor(y), main = "Status v. HNR")
+
+```
+
+Difference! There appears to be a negative correlation here.
+
+```{r RPDECorr}
+
+plot(y, parkdata$RPDE, main = "Status v. RPDE")
+logreg = glm(y ~ parkdata$RPDE)
+plot(parkdata$RPDE ~ factor(y), main = "Status v. RPDE")
+
+```
+
+The ranges are very similar here, but the medians appear to be different.
+
+```{r DFACorr}
+
+plot(y, parkdata$DFA, main = "Status v. DFA")
+logreg = glm(y ~ parkdata$DFA)
+plot(parkdata$DFA ~ factor(y), main = "Status v. DFA")
+
+```
+
+The ranges and medians appear different here.
+
+```{r spread1Corr}
+
+plot(y, parkdata$spread1, main = "Status v. spread1")
+logreg = glm(y ~ parkdata$spread1)
+plot(parkdata$spread1 ~ factor(y), main = "Status v. spread1")
+
+```
+
+The ranges and medians are very different here. (good predictor variable)
+
+```{r spread2Corr}
+
+plot(y, parkdata$spread2, main = "Status v. spread2")
+logreg = glm(y ~ parkdata$spread2)
+plot(parkdata$spread2 ~ factor(y), main = "Status v. spread2")
+
+```
+
+Again. (good predictor variable)
+
+```{r D2Corr}
+
+plot(y, parkdata$D2, main = "Status v. D2")
+logreg = glm(y ~ parkdata$D2)
+plot(parkdata$D2 ~ factor(y), main = "Status v. D2")
+
+```
+
+Again, but a little less than spreads 1 and 2. (decent predictor variable)
+
+```{r PPECorr}
+
+plot(y, parkdata$PPE, main = "Status v. PPE")
+logreg = glm(y ~ parkdata$PPE)
+plot(parkdata$PPE ~ factor(y), main = "Status v. PPE")
+
+```
+
+Again, and a little more than spreads 1 and 2. (good predictor variable)
+
+Through the graphs we can see that the variables PPE, spread1, spread2, Jitter.DDP, and MDVP.Jitter.Abs. have the most difference in the interquartile ranges. These variables can be used as predictor variables in our regression because they all have similar positive correlations and won't level out the correlations.
+
+
+```{r FinalRegression}
+
+x = parkdata$PPE + parkdata$spread1 + parkdata$spread2 + parkdata$Jitter.DDP 
+plot(y, x, main = "Status v. Prediction", xlab = "Status", ylab = "Prediction")
+
+glm(y ~ x)
+prediction = predict(glm(y ~ x))
+lines(prediction, x)
+cor(prediction, y)
+
+plot(factor(y), x, main = "Status v. PPE", xlab = "Status", ylab = "Prediction")
+
+```
+
+This correlation is very low because we are dealing with a factored variable and numeric variables. There can not be a linear correlation drawn between the two factor levels. The x axis just shows what the probability of the person having the disease given the parameters from vocal patterns is. Though from the boxplot graph, we can see there is a difference in the voice levels of a healthy person and a diseased person.
+
+
+
